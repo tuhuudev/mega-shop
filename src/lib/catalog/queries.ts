@@ -1,6 +1,12 @@
 import { createClient } from '@/lib/supabase/server';
 import { categorySchema, productSchema } from '@/lib/schemas';
 import type { Category, Product } from '@/lib/schemas';
+import {
+  isSupabaseConfigured,
+  mockListProducts,
+  mockProductBySlug,
+  MOCK_CATEGORIES,
+} from './mock';
 
 /**
  * Server fetch helpers cho Catalog. Dung createClient() (RSC) -> RLS cho phep DOC public.
@@ -18,6 +24,8 @@ export interface ListProductsParams {
 /** Lay danh sach SP, ho tro tim theo ten, loc theo danh muc (slug), sap xep. */
 export async function listProducts(params: ListProductsParams = {}): Promise<Product[]> {
   const { search, categorySlug, sort = 'newest' } = params;
+  // Chua cau hinh Supabase that -> dung mock de xem/cai thien UI ngay.
+  if (!isSupabaseConfigured()) return mockListProducts(params);
   const supabase = await createClient();
 
   let query = supabase
@@ -66,6 +74,7 @@ export async function listProducts(params: ListProductsParams = {}): Promise<Pro
 
 /** Lay 1 SP theo slug (dung cho PDP). Tra null neu khong ton tai. */
 export async function getProductBySlug(slug: string): Promise<Product | null> {
+  if (!isSupabaseConfigured()) return mockProductBySlug(slug);
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('products')
@@ -81,6 +90,7 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
 
 /** Lay tat ca danh muc (dung cho thanh loc). */
 export async function listCategories(): Promise<Category[]> {
+  if (!isSupabaseConfigured()) return MOCK_CATEGORIES;
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('categories')
