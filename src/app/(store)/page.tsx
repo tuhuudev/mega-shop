@@ -47,57 +47,49 @@ export default async function HomePage({
   ]);
 
   return (
-    <div className="flex flex-col gap-10">
-      {/* Hero — editorial, am ap */}
-      <section className="animate-rise relative overflow-hidden rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-ink)] px-7 py-12 text-[var(--color-ink-fg)] sm:px-12 sm:py-16">
-        {/* Quang sang am + vong tron trang tri */}
-        <div className="pointer-events-none absolute -right-24 -top-24 h-80 w-80 rounded-full bg-[var(--color-primary)] opacity-25 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-32 -left-16 h-72 w-72 rounded-full bg-[var(--color-accent)] opacity-20 blur-3xl" />
+    <div className="flex flex-col gap-14">
+      {/* Hero — toi gian, airy */}
+      <section className="animate-rise mx-auto max-w-3xl pt-10 pb-2 text-center sm:pt-16">
+        <span className="text-xs uppercase tracking-[0.28em] text-[var(--color-muted)]">
+          Cà phê · Trà · Phụ kiện
+        </span>
+        <h1 className="font-display mt-6 text-5xl leading-[1.08] text-[var(--color-text)] sm:text-7xl">
+          Mua sắm, đơn giản.
+        </h1>
+        <p className="mx-auto mt-5 max-w-md text-base leading-relaxed text-[var(--color-muted)]">
+          Tuyển chọn kỹ, giao nhanh, thanh toán an toàn qua VNPay.
+        </p>
 
-        <div className="relative max-w-2xl">
-          <span className="inline-flex items-center gap-2 rounded-full border border-[var(--color-ink-fg)]/20 px-3.5 py-1 text-xs font-medium uppercase tracking-[0.2em] text-[var(--color-ink-fg)]/70">
-            Rang xay mỗi ngày
-          </span>
-          <h1 className="mt-5 font-display text-4xl font-medium leading-[1.05] tracking-tight sm:text-6xl">
-            Hương vị thật,
-            <br />
-            <span className="italic text-[var(--color-primary)]">pha cho ngày của bạn.</span>
-          </h1>
-          <p className="mt-5 max-w-xl text-base leading-relaxed text-[var(--color-ink-fg)]/75 sm:text-lg">
-            Cà phê, trà và phụ kiện pha chế tuyển chọn. Giao nhanh, thanh toán an toàn qua VNPay.
-          </p>
-
-          {/* Search box (GET form -> giu tren URL, SSR doc lai) */}
-          <form action="/" method="get" className="mt-8 flex max-w-md gap-2.5">
-            {category ? <input type="hidden" name="category" value={category} /> : null}
-            {sort !== 'newest' ? <input type="hidden" name="sort" value={sort} /> : null}
-            <input
-              type="search"
-              name="search"
-              defaultValue={search ?? ''}
-              placeholder="Tìm cà phê, trà, phụ kiện…"
-              aria-label="Tìm sản phẩm"
-              className="h-12 w-full rounded-full border border-[var(--color-ink-fg)]/15 bg-[var(--color-ink-fg)]/8 px-5 text-[var(--color-ink-fg)] placeholder:text-[var(--color-ink-fg)]/45 outline-none transition focus:border-[var(--color-primary)] focus:bg-[var(--color-ink-fg)]/12"
-            />
-            <button
-              type="submit"
-              className="h-12 shrink-0 rounded-full bg-[var(--color-primary)] px-7 font-semibold text-[var(--color-primary-fg)] transition hover:-translate-y-0.5"
-            >
-              Tìm
-            </button>
-          </form>
-        </div>
+        {/* Search box (GET form -> giu tren URL, SSR doc lai) — gach chan toi gian */}
+        <form action="/" method="get" className="mx-auto mt-10 flex max-w-md items-center gap-3 border-b border-[var(--color-border-strong)] pb-2 focus-within:border-[var(--color-text)]">
+          {category ? <input type="hidden" name="category" value={category} /> : null}
+          {sort !== 'newest' ? <input type="hidden" name="sort" value={sort} /> : null}
+          <input
+            type="search"
+            name="search"
+            defaultValue={search ?? ''}
+            placeholder="Tìm sản phẩm…"
+            aria-label="Tìm sản phẩm"
+            className="h-9 w-full bg-transparent text-[var(--color-text)] placeholder:text-[var(--color-muted)] outline-none"
+          />
+          <button
+            type="submit"
+            className="shrink-0 text-sm font-medium text-[var(--color-text)] transition-opacity hover:opacity-60"
+          >
+            Tìm →
+          </button>
+        </form>
       </section>
 
       {/* Category chips */}
-      <section className="flex flex-wrap items-center gap-2.5">
+      <section className="flex flex-wrap items-center justify-center gap-2.5">
         <Link
           href={buildHref(sp, { category: undefined })}
           className={cn(
-            'rounded-full border px-4 py-2 text-sm font-medium transition',
+            'rounded-full border px-4 py-1.5 text-sm transition',
             !category
-              ? 'border-[var(--color-ink)] bg-[var(--color-ink)] text-[var(--color-ink-fg)] shadow-[var(--shadow-soft)]'
-              : 'border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-muted)] hover:border-[var(--color-primary)] hover:text-[var(--color-text)]',
+              ? 'border-[var(--color-text)] bg-[var(--color-text)] text-[var(--color-primary-fg)]'
+              : 'border-[var(--color-border-strong)] text-[var(--color-muted)] hover:border-[var(--color-text)] hover:text-[var(--color-text)]',
           )}
         >
           Tất cả
@@ -109,10 +101,10 @@ export default async function HomePage({
               key={c.id}
               href={buildHref(sp, { category: c.slug })}
               className={cn(
-                'rounded-full border px-4 py-2 text-sm font-medium transition',
+                'rounded-full border px-4 py-1.5 text-sm transition',
                 active
-                  ? 'border-[var(--color-ink)] bg-[var(--color-ink)] text-[var(--color-ink-fg)] shadow-[var(--shadow-soft)]'
-                  : 'border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-muted)] hover:border-[var(--color-primary)] hover:text-[var(--color-text)]',
+                  ? 'border-[var(--color-text)] bg-[var(--color-text)] text-[var(--color-primary-fg)]'
+                  : 'border-[var(--color-border-strong)] text-[var(--color-muted)] hover:border-[var(--color-text)] hover:text-[var(--color-text)]',
               )}
             >
               {c.name}
@@ -131,7 +123,7 @@ export default async function HomePage({
           ) : null}
           <span className="font-semibold text-[var(--color-text)]">{products.length}</span> sản phẩm
         </p>
-        <div className="flex flex-wrap items-center gap-1.5">
+        <div className="flex flex-wrap items-center gap-4">
           {SORT_OPTIONS.map((opt) => {
             const active = sort === opt.value;
             return (
@@ -139,9 +131,9 @@ export default async function HomePage({
                 key={opt.value}
                 href={buildHref(sp, { sort: opt.value })}
                 className={cn(
-                  'rounded-full px-3.5 py-1.5 text-sm transition',
+                  'px-1 py-1 text-sm transition-colors',
                   active
-                    ? 'bg-[var(--color-primary)]/12 font-semibold text-[var(--color-primary)]'
+                    ? 'font-medium text-[var(--color-text)] underline decoration-[var(--color-text)] underline-offset-[6px]'
                     : 'text-[var(--color-muted)] hover:text-[var(--color-text)]',
                 )}
               >

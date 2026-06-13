@@ -1,48 +1,45 @@
 @import 'tailwindcss';
 
 /* ============================================================
-   "Warm artisanal editorial" — quan ca phe & tra Viet hien dai.
-   Nen kem am, muc espresso, diem nhan terracotta.
-   Display: Fraunces (serif) · Body: Be Vietnam Pro.
+   "Scandinavian minimal" — trang am, don sac, nhieu khoang trong.
+   Vien mong, gan nhu khong do bong; san pham la diem mau duy nhat.
+   Font: Be Vietnam Pro (weight mong cho tieu de).
    ============================================================ */
 @theme {
-  --color-bg: #f6efe3;          /* nen kem am */
-  --color-surface: #fffdf8;     /* the/card gan trang am */
+  --color-bg: #f8f7f4;          /* trang am */
+  --color-surface: #ffffff;
   --color-elevated: #ffffff;
-  --color-border: #e7dcc8;      /* vien am */
-  --color-text: #211810;        /* muc espresso */
-  --color-muted: #8c7c66;       /* taupe am */
-  --color-primary: #bd4626;     /* terracotta */
-  --color-primary-fg: #fff7ef;
-  --color-accent: #2f5d4f;      /* xanh tra dam (phu) */
-  --color-ink: #1b1410;         /* panel toi */
-  --color-ink-fg: #f4e9d8;
-  --color-success: #3f7d4e;
-  --color-danger: #b3261e;
+  --color-border: #e7e4dd;      /* vien rat nhe */
+  --color-border-strong: #d6d2c8;
+  --color-text: #1a1a17;        /* gan den, hoi am */
+  --color-muted: #8b887f;       /* xam trung tinh */
+  --color-primary: #1a1a17;     /* CTA don sac (gan den) */
+  --color-primary-fg: #f8f7f4;
+  --color-accent: #9a5c3f;      /* clay nhat — dung rat tiet che */
+  --color-success: #4a7a57;
+  --color-danger: #a8453a;
 
-  --radius: 1rem;
-  --radius-sm: 0.625rem;
-  --radius-lg: 1.75rem;
+  --radius: 0.5rem;
+  --radius-sm: 0.375rem;
+  --radius-lg: 0.875rem;
 
   --font-sans: var(--font-bvp), system-ui, sans-serif;
-  --font-display: var(--font-fraunces), Georgia, 'Times New Roman', serif;
 
-  --shadow-soft: 0 1px 2px rgba(33, 24, 16, 0.04), 0 8px 24px -12px rgba(33, 24, 16, 0.14);
-  --shadow-lift: 0 2px 4px rgba(33, 24, 16, 0.05), 0 24px 48px -20px rgba(33, 24, 16, 0.28);
+  --shadow-soft: 0 1px 2px rgba(26, 26, 23, 0.03);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --color-bg: #14100c;
-    --color-surface: #1e1813;
-    --color-elevated: #241d17;
-    --color-border: #352b22;
-    --color-text: #f4e9d8;
-    --color-muted: #a8967e;
-    --color-primary: #e0683f;
-    --color-primary-fg: #1b1410;
-    --color-ink: #0e0b08;
-    --color-ink-fg: #f4e9d8;
+    --color-bg: #15140f;
+    --color-surface: #1c1b16;
+    --color-elevated: #211f19;
+    --color-border: #2c2a23;
+    --color-border-strong: #3a382f;
+    --color-text: #f1efe8;
+    --color-muted: #9d9a8f;
+    --color-primary: #f1efe8;
+    --color-primary-fg: #15140f;
+    --color-accent: #c08560;
   }
 }
 
@@ -56,38 +53,21 @@ body {
   background-color: var(--color-bg);
   color: var(--color-text);
   font-family: var(--font-sans);
-  /* Khong khi am: 2 quang sang nhe + grain mo tinh te. */
-  background-image:
-    radial-gradient(60rem 40rem at 85% -10%, rgba(189, 70, 38, 0.10), transparent 60%),
-    radial-gradient(50rem 40rem at 0% 5%, rgba(47, 93, 79, 0.07), transparent 55%);
-  background-attachment: fixed;
 }
 
-/* Lop grain rat nhe phu toan trang -> cam giac giay/vai thu cong. */
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  opacity: 0.035;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-}
-
-/* Tien ich font hien thi (Fraunces) — tieu de editorial. */
+/* Tieu de lon, mong, airy — chu dao Scandinavian. */
 .font-display {
-  font-family: var(--font-display);
-  font-optical-sizing: auto;
-  letter-spacing: -0.01em;
+  font-weight: 300;
+  letter-spacing: -0.02em;
 }
 
-/* Reveal vao trang theo tang (dung voi style animation-delay). */
+/* Reveal vao trang theo tang nhe nhang. */
 @keyframes rise {
-  from { opacity: 0; transform: translateY(14px); }
+  from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
 .animate-rise {
-  animation: rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: rise 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 @media (prefers-reduced-motion: reduce) {

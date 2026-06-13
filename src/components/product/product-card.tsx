@@ -10,7 +10,7 @@ import { AddToCartButton } from './add-to-cart-button';
 const FALLBACK_IMG =
   'data:image/svg+xml;utf8,' +
   encodeURIComponent(
-    `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400"><rect width="400" height="400" fill="#efe4d2"/><circle cx="200" cy="180" r="64" fill="none" stroke="#bd4626" stroke-width="3" opacity="0.5"/><path d="M200 132 q22 48 0 96 q-22 -48 0 -96Z" fill="#bd4626" opacity="0.45"/><text x="50%" y="300" font-family="Georgia, serif" font-style="italic" font-size="26" fill="#8c7c66" text-anchor="middle">Megashop</text></svg>`,
+    `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400"><rect width="400" height="400" fill="#f1efe9"/><text x="50%" y="50%" font-family="system-ui, sans-serif" font-size="17" letter-spacing="1" fill="#b3afa4" text-anchor="middle" dominant-baseline="middle">megashop</text></svg>`,
   );
 
 export function ProductCard({ product }: { product: Product }) {
@@ -19,47 +19,52 @@ export function ProductCard({ product }: { product: Product }) {
   const lowStock = !outOfStock && product.stock <= 5;
 
   return (
-    <div className="group flex flex-col overflow-hidden rounded-[var(--radius)] border border-[var(--color-border)] bg-[var(--color-surface)] shadow-[var(--shadow-soft)] transition duration-300 hover:-translate-y-1 hover:shadow-[var(--shadow-lift)]">
-      <Link href={href} className="relative block aspect-square overflow-hidden bg-[var(--color-bg)]">
+    <div className="group flex flex-col">
+      <Link
+        href={href}
+        className="relative block aspect-square overflow-hidden rounded-[var(--radius)] border border-[var(--color-border)] bg-[var(--color-surface)]"
+      >
         <Image
           src={product.image_url ?? FALLBACK_IMG}
           alt={product.name}
           fill
           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-          className="object-cover transition duration-500 group-hover:scale-[1.06]"
+          className="object-cover transition duration-500 group-hover:scale-[1.03]"
           // Anh fallback la data URI -> bo qua optimizer cho truong hop do.
           unoptimized={!product.image_url}
         />
         {outOfStock ? (
-          <span className="absolute left-3 top-3 rounded-full bg-[var(--color-ink)]/85 px-2.5 py-1 text-xs font-semibold text-[var(--color-ink-fg)] backdrop-blur">
+          <span className="absolute left-3 top-3 rounded-full bg-[var(--color-surface)] px-2.5 py-1 text-xs text-[var(--color-muted)] ring-1 ring-[var(--color-border-strong)]">
             Hết hàng
           </span>
         ) : lowStock ? (
-          <span className="absolute left-3 top-3 rounded-full bg-[var(--color-primary)] px-2.5 py-1 text-xs font-semibold text-[var(--color-primary-fg)]">
+          <span className="absolute left-3 top-3 rounded-full bg-[var(--color-surface)] px-2.5 py-1 text-xs text-[var(--color-accent)] ring-1 ring-[var(--color-border-strong)]">
             Sắp hết
           </span>
         ) : null}
       </Link>
 
-      <div className="flex flex-1 flex-col gap-2 p-4">
-        <Link
-          href={href}
-          className="line-clamp-2 font-medium leading-snug text-[var(--color-text)] transition-colors hover:text-[var(--color-primary)]"
-        >
-          {product.name}
-        </Link>
-
-        <div className="mt-auto flex items-baseline justify-between gap-2 pt-2">
-          <span className="font-display text-xl font-semibold text-[var(--color-text)]">
-            {formatVnd(product.price)}
-          </span>
+      <div className="flex flex-1 flex-col gap-1.5 pt-3.5">
+        <div className="flex items-start justify-between gap-3">
+          <Link
+            href={href}
+            className="line-clamp-2 text-sm leading-snug text-[var(--color-text)] transition-colors hover:text-[var(--color-muted)]"
+          >
+            {product.name}
+          </Link>
           <span
             className={cn(
-              'text-xs font-medium',
+              'shrink-0 text-xs',
               outOfStock ? 'text-[var(--color-danger)]' : 'text-[var(--color-muted)]',
             )}
           >
-            {outOfStock ? 'Hết hàng' : `Còn ${product.stock}`}
+            {outOfStock ? 'Hết' : `Còn ${product.stock}`}
+          </span>
+        </div>
+
+        <div className="mt-auto pt-1.5">
+          <span className="text-base font-medium text-[var(--color-text)]">
+            {formatVnd(product.price)}
           </span>
         </div>
 
