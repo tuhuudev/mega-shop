@@ -12,7 +12,12 @@ const viewports = [
   { name: 'mobile', width: 390, height: 844 },
 ];
 
-const slug = (r) => (r === '/' ? 'home' : r.replace(/^\/+|\/+$/g, '').replace(/\//g, '-'));
+// Ten file an toan: bo dau /, doi / -> -, va thay moi ky tu khong hop le (? # & = ...) -> -
+const slug = (r) =>
+  (r === '/' ? 'home' : r.replace(/^\/+|\/+$/g, '').replace(/\//g, '-'))
+    .replace(/[^a-zA-Z0-9._-]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '') || 'home';
 
 await mkdir('.screenshots', { recursive: true });
 const browser = await chromium.launch();

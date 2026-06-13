@@ -5,9 +5,9 @@ import type { Product } from '@/lib/schemas';
 export function ProductGrid({ products }: { products: Product[] }) {
   if (products.length === 0) {
     return (
-      <div className="rounded-[var(--radius)] border border-dashed border-[var(--color-border)] py-20 text-center">
-        <p className="text-lg font-semibold text-[var(--color-text)]">Không tìm thấy sản phẩm</p>
-        <p className="mt-1 text-sm text-[var(--color-muted)]">Thử đổi từ khóa hoặc bộ lọc khác.</p>
+      <div className="rounded-[var(--radius)] border border-dashed border-[var(--color-border-strong)] py-24 text-center">
+        <p className="font-display text-2xl text-[var(--color-text)]">Không tìm thấy sản phẩm</p>
+        <p className="mt-2 text-sm text-[var(--color-muted)]">Thử đổi từ khóa hoặc bộ lọc khác.</p>
       </div>
     );
   }
