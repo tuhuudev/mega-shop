@@ -12,7 +12,7 @@ export const dynamic = 'force-dynamic';
 const FALLBACK_IMG =
   'data:image/svg+xml;utf8,' +
   encodeURIComponent(
-    `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="800" viewBox="0 0 800 800"><rect width="800" height="800" fill="#f5f5f4"/><text x="50%" y="50%" font-family="sans-serif" font-size="36" fill="#a8a29e" text-anchor="middle" dominant-baseline="middle">Mega Shop</text></svg>`,
+    `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="800" viewBox="0 0 800 800"><rect width="800" height="800" fill="#f1efe9"/><text x="50%" y="50%" font-family="system-ui, sans-serif" font-size="30" letter-spacing="2" fill="#b3afa4" text-anchor="middle" dominant-baseline="middle">megashop</text></svg>`,
   );
 
 export async function generateMetadata({
@@ -49,16 +49,16 @@ export default async function ProductDetailPage({
   const lowStock = !outOfStock && product.stock <= 5;
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-8">
       <nav className="text-sm text-[var(--color-muted)]">
-        <Link href="/" className="hover:text-[var(--color-text)]">
+        <Link href="/" className="transition-colors hover:text-[var(--color-text)]">
           Sản phẩm
         </Link>
-        <span className="mx-2">/</span>
+        <span className="mx-2 text-[var(--color-border-strong)]">/</span>
         <span className="text-[var(--color-text)]">{product.name}</span>
       </nav>
 
-      <div className="grid gap-8 md:grid-cols-2">
+      <div className="grid gap-10 md:grid-cols-2 lg:gap-16">
         {/* Anh */}
         <div className="relative aspect-square overflow-hidden rounded-[var(--radius)] border border-[var(--color-border)] bg-[var(--color-surface)]">
           <Image
@@ -73,33 +73,34 @@ export default async function ProductDetailPage({
         </div>
 
         {/* Thong tin + mua */}
-        <div className="flex flex-col gap-5">
+        <div className="flex flex-col gap-6 md:py-4">
           <div>
-            <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">{product.name}</h1>
-            <p className="mt-3 text-3xl font-extrabold text-[var(--color-primary)]">
+            <h1 className="font-display text-3xl leading-tight text-[var(--color-text)] sm:text-4xl">
+              {product.name}
+            </h1>
+            <p className="mt-4 text-2xl font-medium text-[var(--color-text)]">
               {formatVnd(product.price)}
             </p>
           </div>
 
-          <div className="flex items-center gap-2 text-sm">
+          <div className="flex items-center gap-2 text-sm text-[var(--color-muted)]">
             <span
               className={cn(
-                'inline-flex items-center rounded-full px-3 py-1 font-medium',
-                outOfStock
-                  ? 'bg-[var(--color-danger)]/10 text-[var(--color-danger)]'
-                  : 'bg-[var(--color-success)]/10 text-[var(--color-success)]',
+                'h-1.5 w-1.5 rounded-full',
+                outOfStock ? 'bg-[var(--color-danger)]' : 'bg-[var(--color-success)]',
               )}
-            >
-              {outOfStock ? 'Hết hàng' : lowStock ? `Sắp hết · còn ${product.stock}` : `Còn ${product.stock} sản phẩm`}
-            </span>
+            />
+            {outOfStock ? 'Hết hàng' : lowStock ? `Sắp hết · còn ${product.stock}` : `Còn ${product.stock} sản phẩm`}
           </div>
 
           {product.description ? (
-            <div className="whitespace-pre-line leading-relaxed text-[var(--color-muted)]">
+            <div className="whitespace-pre-line border-t border-[var(--color-border)] pt-6 leading-relaxed text-[var(--color-muted)]">
               {product.description}
             </div>
           ) : (
-            <p className="text-[var(--color-muted)]">Chưa có mô tả cho sản phẩm này.</p>
+            <p className="border-t border-[var(--color-border)] pt-6 text-[var(--color-muted)]">
+              Chưa có mô tả cho sản phẩm này.
+            </p>
           )}
 
           <div className="mt-2">
