@@ -143,9 +143,15 @@ create policy "order_items read" on public.order_items for select
 create policy "order_items insert" on public.order_items for insert
   with check (exists (select 1 from public.orders o where o.id = order_id and o.user_id = auth.uid()));
 
--- payments: chu don doc; ghi do SERVICE ROLE (webhook) -> khong policy insert cho user thuong.
+-- payments: chu don doc; UPDATE do SERVICE ROLE (return/IPN handler) bypass RLS.
 create policy "payments read" on public.payments for select
   using (exists (select 1 from public.orders o where o.id = order_id and (o.user_id = auth.uid() or public.is_staff())));
+-- Chu don duoc INSERT payment pending cho don PENDING cua chinh minh (route create chay bang client user).
+create policy "payments insert own order" on public.payments for insert
+  with check (exists (
+    select 1 from public.orders o
+    where o.id = order_id and o.user_id = auth.uid() and o.status = 'pending'
+  ));
 
 -- ============================================================
 -- RPC: dat hang nguyen tu (tru ton kho + tao order + items) - goi tu Server Action.
