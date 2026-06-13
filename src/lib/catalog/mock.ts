@@ -9,7 +9,10 @@ import type { ListProductsParams } from './queries';
 export function isSupabaseConfigured(): boolean {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '';
-  return /^https:\/\/.+\.supabase\.co/.test(url) && !url.includes('YOUR_PROJECT') && key.length > 20 && !key.includes('YOUR_');
+  // Chap nhan ca Supabase cloud (https://xxx.supabase.co) lan local (http://127.0.0.1:54321).
+  const validUrl = /^https?:\/\/\S+/.test(url) && !url.includes('YOUR_PROJECT');
+  const validKey = key.length > 20 && !key.includes('YOUR_');
+  return validUrl && validKey;
 }
 
 export const MOCK_CATEGORIES: Category[] = [
