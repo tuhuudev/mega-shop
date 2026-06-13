@@ -11,14 +11,18 @@ import type { CartLine, CheckoutInput } from '@/lib/schemas';
  * dung Supabase client co RLS (chi tac dong len gio cua user dang dang nhap).
  */
 
-/** Lay user dang dang nhap, neu chua dang nhap -> nem loi. */
+/**
+ * Lay user dang dang nhap. Chua dang nhap -> redirect sang /login
+ * (muot, khong nem loi crash overlay). redirect() tra ve `never`
+ * nen sau dong nay TS hieu `user` chac chan ton tai.
+ */
 async function requireUserId(
   supabase: Awaited<ReturnType<typeof createClient>>,
 ): Promise<string> {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) throw new Error('AUTH_REQUIRED');
+  if (!user) redirect('/login?next=/cart');
   return user.id;
 }
 
