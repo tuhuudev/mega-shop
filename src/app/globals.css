@@ -1,38 +1,96 @@
 @import 'tailwindcss';
 
 /* ============================================================
-   Design tokens (Tailwind v4 @theme) — bang mau "warm commerce".
-   Sub-agent dung class Tailwind + bien --color-* nay.
+   "Warm artisanal editorial" — quan ca phe & tra Viet hien dai.
+   Nen kem am, muc espresso, diem nhan terracotta.
+   Display: Fraunces (serif) · Body: Be Vietnam Pro.
    ============================================================ */
 @theme {
-  --color-bg: #ffffff;
-  --color-surface: #fafaf9;
-  --color-border: #e7e5e4;
-  --color-text: #1c1917;
-  --color-muted: #78716c;
-  --color-primary: #ea580c;
-  --color-primary-fg: #ffffff;
-  --color-success: #16a34a;
-  --color-danger: #dc2626;
-  --radius: 0.75rem;
-  --font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --color-bg: #f6efe3;          /* nen kem am */
+  --color-surface: #fffdf8;     /* the/card gan trang am */
+  --color-elevated: #ffffff;
+  --color-border: #e7dcc8;      /* vien am */
+  --color-text: #211810;        /* muc espresso */
+  --color-muted: #8c7c66;       /* taupe am */
+  --color-primary: #bd4626;     /* terracotta */
+  --color-primary-fg: #fff7ef;
+  --color-accent: #2f5d4f;      /* xanh tra dam (phu) */
+  --color-ink: #1b1410;         /* panel toi */
+  --color-ink-fg: #f4e9d8;
+  --color-success: #3f7d4e;
+  --color-danger: #b3261e;
+
+  --radius: 1rem;
+  --radius-sm: 0.625rem;
+  --radius-lg: 1.75rem;
+
+  --font-sans: var(--font-bvp), system-ui, sans-serif;
+  --font-display: var(--font-fraunces), Georgia, 'Times New Roman', serif;
+
+  --shadow-soft: 0 1px 2px rgba(33, 24, 16, 0.04), 0 8px 24px -12px rgba(33, 24, 16, 0.14);
+  --shadow-lift: 0 2px 4px rgba(33, 24, 16, 0.05), 0 24px 48px -20px rgba(33, 24, 16, 0.28);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --color-bg: #0c0a09;
-    --color-surface: #1c1917;
-    --color-border: #292524;
-    --color-text: #fafaf9;
-    --color-muted: #a8a29e;
-    --color-primary: #fb923c;
+    --color-bg: #14100c;
+    --color-surface: #1e1813;
+    --color-elevated: #241d17;
+    --color-border: #352b22;
+    --color-text: #f4e9d8;
+    --color-muted: #a8967e;
+    --color-primary: #e0683f;
+    --color-primary-fg: #1b1410;
+    --color-ink: #0e0b08;
+    --color-ink-fg: #f4e9d8;
   }
 }
 
 * { box-sizing: border-box; }
-html { -webkit-font-smoothing: antialiased; }
-body { background: var(--color-bg); color: var(--color-text); font-family: var(--font-sans); }
+html {
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  /* Khong khi am: 2 quang sang nhe + grain mo tinh te. */
+  background-image:
+    radial-gradient(60rem 40rem at 85% -10%, rgba(189, 70, 38, 0.10), transparent 60%),
+    radial-gradient(50rem 40rem at 0% 5%, rgba(47, 93, 79, 0.07), transparent 55%);
+  background-attachment: fixed;
+}
+
+/* Lop grain rat nhe phu toan trang -> cam giac giay/vai thu cong. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Tien ich font hien thi (Fraunces) — tieu de editorial. */
+.font-display {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  letter-spacing: -0.01em;
+}
+
+/* Reveal vao trang theo tang (dung voi style animation-delay). */
+@keyframes rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-rise {
+  animation: rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  .animate-rise { animation: none; }
 }
