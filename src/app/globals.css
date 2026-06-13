@@ -1,0 +1,38 @@
+@import 'tailwindcss';
+
+/* ============================================================
+   Design tokens (Tailwind v4 @theme) — bang mau "warm commerce".
+   Sub-agent dung class Tailwind + bien --color-* nay.
+   ============================================================ */
+@theme {
+  --color-bg: #ffffff;
+  --color-surface: #fafaf9;
+  --color-border: #e7e5e4;
+  --color-text: #1c1917;
+  --color-muted: #78716c;
+  --color-primary: #ea580c;
+  --color-primary-fg: #ffffff;
+  --color-success: #16a34a;
+  --color-danger: #dc2626;
+  --radius: 0.75rem;
+  --font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #0c0a09;
+    --color-surface: #1c1917;
+    --color-border: #292524;
+    --color-text: #fafaf9;
+    --color-muted: #a8a29e;
+    --color-primary: #fb923c;
+  }
+}
+
+* { box-sizing: border-box; }
+html { -webkit-font-smoothing: antialiased; }
+body { background: var(--color-bg); color: var(--color-text); font-family: var(--font-sans); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
