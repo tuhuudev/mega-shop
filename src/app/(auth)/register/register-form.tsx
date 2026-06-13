@@ -15,8 +15,8 @@ export function RegisterForm() {
 
   return (
     <Card>
-      <h1 className="text-xl font-bold text-[var(--color-text)]">Tạo tài khoản</h1>
-      <p className="mt-1 text-sm text-[var(--color-muted)]">Đăng ký để mua sắm tại Mega Shop.</p>
+      <h1 className="text-xl font-medium tracking-tight text-[var(--color-text)]">Tạo tài khoản</h1>
+      <p className="mt-1.5 text-sm text-[var(--color-muted)]">Đăng ký để mua sắm tại megashop.</p>
 
       <form action={formAction} className="mt-6 space-y-4">
         <div className="space-y-1.5">
@@ -46,7 +46,7 @@ export function RegisterForm() {
         Đã có tài khoản?{' '}
         <Link
           href={next ? `/login?next=${encodeURIComponent(next)}` : '/login'}
-          className="font-semibold text-[var(--color-primary)] hover:underline"
+          className="font-medium text-[var(--color-text)] underline underline-offset-4 hover:opacity-60"
         >
           Đăng nhập
         </Link>

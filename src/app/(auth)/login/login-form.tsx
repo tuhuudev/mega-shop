@@ -15,8 +15,8 @@ export function LoginForm() {
 
   return (
     <Card>
-      <h1 className="text-xl font-bold text-[var(--color-text)]">Đăng nhập</h1>
-      <p className="mt-1 text-sm text-[var(--color-muted)]">Chào mừng quay lại Mega Shop.</p>
+      <h1 className="text-xl font-medium tracking-tight text-[var(--color-text)]">Đăng nhập</h1>
+      <p className="mt-1.5 text-sm text-[var(--color-muted)]">Chào mừng quay lại megashop.</p>
 
       <form action={formAction} className="mt-6 space-y-4">
         <input type="hidden" name="next" value={next} />
@@ -42,7 +42,7 @@ export function LoginForm() {
         Chưa có tài khoản?{' '}
         <Link
           href={next ? `/register?next=${encodeURIComponent(next)}` : '/register'}
-          className="font-semibold text-[var(--color-primary)] hover:underline"
+          className="font-medium text-[var(--color-text)] underline underline-offset-4 hover:opacity-60"
         >
           Đăng ký
         </Link>
