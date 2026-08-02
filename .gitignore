@@ -11,3 +11,7 @@ next-env.d.ts
 supabase/.temp
 coverage
 .screenshots
+
+# Agent skills cai qua `npx skills add` (tai lai bang skills-lock.json) + settings local
+.agents
+.claude

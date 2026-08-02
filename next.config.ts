@@ -4,8 +4,11 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   typedRoutes: true,
   images: {
-    // Anh san pham luu o Supabase Storage.
-    remotePatterns: [{ protocol: 'https', hostname: '*.supabase.co' }],
+    // Anh san pham: Supabase Storage (production) + Unsplash CDN (seed demo, tra ve WebP).
+    remotePatterns: [
+      { protocol: 'https', hostname: '*.supabase.co' },
+      { protocol: 'https', hostname: 'images.unsplash.com' },
+    ],
   },
 };
 
