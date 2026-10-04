@@ -1,6 +1,6 @@
 -- ============================================================
 -- Mega Shop — setup database (chay 1 lan trong Supabase SQL Editor)
--- Gom: 0001_init.sql (schema + RLS + RPC), seed.sql (du lieu mau), 0002 (siet RLS)
+-- Gom: 0001_init.sql (schema + RLS + RPC), seed.sql (du lieu mau), 0002 + 0003 (siet RLS)
 -- ============================================================
 
 -- ============================================================
@@ -234,4 +234,15 @@ create policy "payments insert own order" on public.payments for insert
         and o.status = 'pending'
         and o.total_amount = amount
     )
+  );
+
+-- ================== 0003: chan tu nang quyen qua profiles.role ==================
+revoke update on public.profiles from anon, authenticated;
+grant update (full_name) on public.profiles to authenticated;
+drop policy if exists "profiles self update" on public.profiles;
+create policy "profiles self update" on public.profiles for update
+  using (id = auth.uid())
+  with check (
+    id = auth.uid()
+    and role = (select p.role from public.profiles p where p.id = auth.uid())
   );

@@ -16,5 +16,6 @@ Single-store e-commerce: Next.js 15 (App Router) + Supabase (Postgres, Auth, RLS
 - `supabase/migrations/0001_init.sql` — schema, RLS, `place_order` RPC. Any table change needs a new migration file.
 
 ## Rules
+- RLS is the real authorization layer (clients hold the anon key and can call PostgREST directly). Every policy needs a WITH CHECK that pins columns users must not change (role, status, amounts); reproduce exploits against a local Postgres before/after a migration.
 - Never trust client-supplied amounts/status; payment state changes only in server handlers using `createAdminClient()` after signature + amount checks.
 - Never commit `.env.local` or real keys.
