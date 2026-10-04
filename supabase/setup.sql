@@ -1,6 +1,6 @@
 -- ============================================================
 -- Mega Shop — setup database (chay 1 lan trong Supabase SQL Editor)
--- Gom: 0001_init.sql (schema + RLS + RPC) ROI seed.sql (du lieu mau)
+-- Gom: 0001_init.sql (schema + RLS + RPC), seed.sql (du lieu mau), 0002 (siet RLS)
 -- ============================================================
 
 -- ============================================================
@@ -217,3 +217,21 @@ from (values
   ('Phin pha cà phê inox', 'phin-inox', 'Inox 304, giữ nhiệt tốt.', 89000, 60, 'phu-kien')
 ) as v(name, slug, description, price, stock, cat)
 on conflict (slug) do nothing;
+
+-- ================== 0002: siet RLS (orders / order_items / payments) ==================
+drop policy if exists "orders insert" on public.orders;
+drop policy if exists "order_items insert" on public.order_items;
+drop policy if exists "payments insert own order" on public.payments;
+create policy "payments insert own order" on public.payments for insert
+  with check (
+    status = 'pending'
+    and transaction_no is null
+    and raw is null
+    and exists (
+      select 1 from public.orders o
+      where o.id = order_id
+        and o.user_id = auth.uid()
+        and o.status = 'pending'
+        and o.total_amount = amount
+    )
+  );

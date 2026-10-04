@@ -121,7 +121,8 @@ export interface VerifyReturnResult {
  * Nhan vao map query (vd: Object.fromEntries(searchParams)).
  */
 export function verifyReturn(query: Record<string, string>): VerifyReturnResult {
-  const received = query['vnp_SecureHash'] ?? '';
+  // Hex khong phan biet hoa/thuong (mot so moi truong VNPay tra chu hoa).
+  const received = (query['vnp_SecureHash'] ?? '').toLowerCase();
 
   // Loai vnp_SecureHash + vnp_SecureHashType ra khoi du lieu ky.
   const signed: Record<string, string> = {};
