@@ -1,9 +1,9 @@
 'use server';
 
 import { redirect } from 'next/navigation';
-import type { Route } from 'next';
 import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
+import { safeNext } from '@/lib/auth/safe-next';
 
 /**
  * Server Actions cho luong Auth (Supabase Auth).
@@ -11,12 +11,6 @@ import { createClient } from '@/lib/supabase/server';
  */
 
 export type AuthState = { error: string } | undefined;
-
-// Chi cho phep redirect noi bo (tranh open-redirect tu ?next=).
-function safeNext(next: FormDataEntryValue | null): Route {
-  const value = typeof next === 'string' ? next : '';
-  return (value.startsWith('/') && !value.startsWith('//') ? value : '/account') as Route;
-}
 
 const signInSchema = z.object({
   email: z.string().email('Email khong hop le'),
