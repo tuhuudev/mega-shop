@@ -1,4 +1,5 @@
-import { createClient } from '@/lib/supabase/server';
+import { unstable_cache } from 'next/cache';
+import { createPublicClient } from '@/lib/supabase/server';
 import { categorySchema, productSchema } from '@/lib/schemas';
 import type { Category, Product } from '@/lib/schemas';
 import {
@@ -9,8 +10,10 @@ import {
 } from './mock';
 
 /**
- * Server fetch helpers cho Catalog. Dung createClient() (RSC) -> RLS cho phep DOC public.
- * Tra ve kieu da validate qua zod tu '@/lib/schemas'.
+ * Server fetch helpers cho Catalog (du lieu CONG KHAI).
+ * Dung createPublicClient() (anon, khong cookie) -> doc duoc trong unstable_cache.
+ * Ket qua duoc cache theo tag 'catalog'; admin sua SP/danh muc se goi
+ * revalidateTag('catalog') de lam tuoi ngay (xem lib/admin/actions.ts).
  */
 
 export type ProductSort = 'newest' | 'price_asc' | 'price_desc' | 'name_asc';
@@ -21,12 +24,24 @@ export interface ListProductsParams {
   sort?: ProductSort;
 }
 
+export const CATALOG_TAG = 'catalog';
+// 5 phut: chot tren cho data nguoi dung lo khong revalidate; admin sua thi tuoi ngay.
+const CATALOG_REVALIDATE = 300;
+
 /** Lay danh sach SP, ho tro tim theo ten, loc theo danh muc (slug), sap xep. */
 export async function listProducts(params: ListProductsParams = {}): Promise<Product[]> {
-  const { search, categorySlug, sort = 'newest' } = params;
   // Chua cau hinh Supabase that -> dung mock de xem/cai thien UI ngay.
   if (!isSupabaseConfigured()) return mockListProducts(params);
-  const supabase = await createClient();
+  return unstable_cache(
+    () => queryProducts(params),
+    ['catalog:listProducts', JSON.stringify(params)],
+    { tags: [CATALOG_TAG], revalidate: CATALOG_REVALIDATE },
+  )();
+}
+
+async function queryProducts(params: ListProductsParams): Promise<Product[]> {
+  const { search, categorySlug, sort = 'newest' } = params;
+  const supabase = createPublicClient();
 
   let query = supabase
     .from('products')
@@ -75,7 +90,15 @@ export async function listProducts(params: ListProductsParams = {}): Promise<Pro
 /** Lay 1 SP theo slug (dung cho PDP). Tra null neu khong ton tai. */
 export async function getProductBySlug(slug: string): Promise<Product | null> {
   if (!isSupabaseConfigured()) return mockProductBySlug(slug);
-  const supabase = await createClient();
+  return unstable_cache(
+    () => queryProductBySlug(slug),
+    ['catalog:getProductBySlug', slug],
+    { tags: [CATALOG_TAG], revalidate: CATALOG_REVALIDATE },
+  )();
+}
+
+async function queryProductBySlug(slug: string): Promise<Product | null> {
+  const supabase = createPublicClient();
   const { data, error } = await supabase
     .from('products')
     .select('id, name, slug, description, price, stock, image_url, category_id, created_at')
@@ -91,7 +114,15 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
 /** Lay tat ca danh muc (dung cho thanh loc). */
 export async function listCategories(): Promise<Category[]> {
   if (!isSupabaseConfigured()) return MOCK_CATEGORIES;
-  const supabase = await createClient();
+  return unstable_cache(
+    () => queryCategories(),
+    ['catalog:listCategories'],
+    { tags: [CATALOG_TAG], revalidate: CATALOG_REVALIDATE },
+  )();
+}
+
+async function queryCategories(): Promise<Category[]> {
+  const supabase = createPublicClient();
   const { data, error } = await supabase
     .from('categories')
     .select('id, name, slug')

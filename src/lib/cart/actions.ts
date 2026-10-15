@@ -1,8 +1,9 @@
 'use server';
 
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+import { CATALOG_TAG } from '@/lib/catalog/queries';
 import { checkoutSchema } from '@/lib/schemas';
 import type { CartLine, CheckoutInput } from '@/lib/schemas';
 
@@ -216,9 +217,10 @@ export async function placeOrder(input: CheckoutInput): Promise<void> {
   }
   if (!orderId) throw new Error('Không tạo được đơn hàng');
 
-  // Gio da bi xoa trong RPC -> lam moi cac trang lien quan.
+  // Gio da bi xoa trong RPC + ton kho da giam -> lam moi cac trang lien quan + catalog.
   revalidatePath('/cart');
   revalidatePath('/orders');
+  revalidateTag(CATALOG_TAG); // ton kho thay doi -> trang chu/PDP tuoi lai
 
   // Handoff sang Payment agent: tao URL VNPay.
   redirect(`/api/payment/vnpay/create?orderId=${orderId}`);

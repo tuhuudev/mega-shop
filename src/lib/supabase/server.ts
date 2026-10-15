@@ -1,4 +1,5 @@
 import { createServerClient } from '@supabase/ssr';
+import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 import type { Database } from './db.types';
 
@@ -23,6 +24,22 @@ export async function createClient() {
       },
     },
   );
+}
+
+/**
+ * Client PUBLIC (anon, KHONG doc cookie) cho cac truy van CONG KHAI (catalog).
+ * - Khong cham cookies() -> dung duoc ben trong unstable_cache (cache data).
+ * - Singleton -> tai dung TCP/TLS (keep-alive), tranh handshake moi request.
+ * RLS van ap (role anon): chi doc duoc bang/cot cho phep cong khai.
+ */
+let _publicClient: ReturnType<typeof createSupabaseClient<Database>> | null = null;
+export function createPublicClient() {
+  _publicClient ??= createSupabaseClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { auth: { persistSession: false, autoRefreshToken: false } },
+  );
+  return _publicClient;
 }
 
 /**

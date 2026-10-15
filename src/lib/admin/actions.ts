@@ -1,7 +1,8 @@
 'use server';
 
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { z } from 'zod';
+import { CATALOG_TAG } from '@/lib/catalog/queries';
 import { productInputSchema, categorySchema, ORDER_STATUSES } from '@/lib/schemas';
 import { createClient } from '@/lib/supabase/server';
 import { slugify } from '@/lib/utils';
@@ -56,6 +57,7 @@ export async function createProduct(formData: FormData): Promise<ActionResult> {
 
   revalidatePath('/admin/products');
   revalidatePath('/admin');
+  revalidateTag(CATALOG_TAG); // lam tuoi catalog cong khai (trang chu, PDP)
   return { ok: true };
 }
 
@@ -79,6 +81,7 @@ export async function updateProduct(id: string, formData: FormData): Promise<Act
   revalidatePath('/admin/products');
   revalidatePath(`/admin/products/${id}`);
   revalidatePath('/admin');
+  revalidateTag(CATALOG_TAG);
   return { ok: true };
 }
 
@@ -94,6 +97,7 @@ export async function deleteProduct(id: string): Promise<ActionResult> {
 
   revalidatePath('/admin/products');
   revalidatePath('/admin');
+  revalidateTag(CATALOG_TAG);
   return { ok: true };
 }
 
@@ -120,6 +124,7 @@ export async function createCategory(formData: FormData): Promise<ActionResult> 
   }
 
   revalidatePath('/admin/categories');
+  revalidateTag(CATALOG_TAG);
   return { ok: true };
 }
 
@@ -134,6 +139,7 @@ export async function deleteCategory(id: string): Promise<ActionResult> {
   }
 
   revalidatePath('/admin/categories');
+  revalidateTag(CATALOG_TAG);
   return { ok: true };
 }
 
