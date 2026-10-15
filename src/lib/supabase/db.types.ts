@@ -42,6 +42,11 @@ export interface Database {
         Returns: string;
       };
       is_staff: { Args: Record<string, never>; Returns: boolean };
+      confirm_vnpay_payment: {
+        Args: { p_txn_ref: string; p_amount: number; p_success: boolean; p_transaction_no: string; p_raw: unknown };
+        Returns: string;
+      };
+      set_order_status: { Args: { p_order_id: string; p_status: string }; Returns: undefined };
     };
     Views: Record<string, never>;
     Enums: Record<string, never>;

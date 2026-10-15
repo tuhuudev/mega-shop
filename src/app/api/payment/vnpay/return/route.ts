@@ -7,10 +7,10 @@ import { verifyReturn } from '@/lib/payment/vnpay';
  * GET /api/payment/vnpay/return
  *
  * VNPay redirect khach ve day kem cac tham so vnp_*.
- * 1. verifyReturn() -> recompute HMAC, kiem chu ky + ma phan hoi.
- * 2. Dung createAdminClient() (service role, bypass RLS) de cap nhat payments + orders.
- * 3. Idempotent: neu payment da 'success' thi bo qua, khong ghi de.
- * 4. Redirect khach ve /orders/<id>?paid=1 (thanh cong) hoac ?failed=1.
+ * 1. verifyReturn() -> recompute HMAC, kiem chu ky + TmnCode + ma phan hoi.
+ * 2. Goi CUNG RPC confirm_vnpay_payment voi IPN (idempotent): IPN la nguon chinh,
+ *    return chi la duong du phong (vd localhost, VNPay khong goi IPN toi duoc).
+ * 3. Redirect khach ve /orders/<id>?paid=1 (thanh cong) hoac ?failed=1.
  */
 export async function GET(request: NextRequest) {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? request.nextUrl.origin;
@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
   // Tra cuu payment theo txn_ref de biet order_id (khong tin orderId tu URL).
   const { data: payment } = await admin
     .from('payments')
-    .select('id, order_id, status, amount')
+    .select('order_id')
     .eq('txn_ref', result.txnRef)
     .maybeSingle();
 
@@ -36,44 +36,22 @@ export async function GET(request: NextRequest) {
 
   const orderId = payment.order_id;
 
-  // Idempotent: da xu ly thanh cong roi -> khong lam lai.
-  if (payment.status === 'success') {
-    return NextResponse.redirect(new URL(`/orders/${orderId}?paid=1`, siteUrl));
-  }
+  // Cap nhat nguyen tu (payment + order) trong DB; so tien so voi orders.total_amount.
+  await admin.rpc('confirm_vnpay_payment', {
+    p_txn_ref: result.txnRef,
+    p_amount: result.amount,
+    p_success: result.isSuccess,
+    p_transaction_no: result.transactionNo,
+    p_raw: query,
+  });
 
-  // Phong chong gia mao so tien: so tien VNPay tra phai khop don.
-  const amountMatches = result.amount === payment.amount;
-
-  if (result.isSuccess && amountMatches) {
-    await admin
-      .from('payments')
-      .update({
-        status: 'success',
-        transaction_no: result.transactionNo,
-        raw: query,
-      })
-      .eq('id', payment.id)
-      .eq('status', 'pending'); // chi cap nhat khi con pending (tranh ghi de race)
-
-    await admin
-      .from('orders')
-      .update({ status: 'paid' })
-      .eq('id', orderId)
-      .eq('status', 'pending');
-
-    return NextResponse.redirect(new URL(`/orders/${orderId}?paid=1`, siteUrl));
-  }
-
-  // That bai (response code != '00' hoac sai so tien) -> danh dau failed.
-  await admin
+  // Hien thi theo trang thai THAT trong DB (IPN co the da xu ly truoc).
+  const { data: after } = await admin
     .from('payments')
-    .update({
-      status: 'failed',
-      transaction_no: result.transactionNo,
-      raw: query,
-    })
-    .eq('id', payment.id)
-    .eq('status', 'pending');
+    .select('status')
+    .eq('txn_ref', result.txnRef)
+    .maybeSingle();
 
-  return NextResponse.redirect(new URL(`/orders/${orderId}?failed=1`, siteUrl));
+  const outcome = after?.status === 'success' ? 'paid=1' : 'failed=1';
+  return NextResponse.redirect(new URL(`/orders/${orderId}?${outcome}`, siteUrl));
 }

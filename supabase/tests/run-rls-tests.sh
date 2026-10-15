@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Run the RLS tests against a throwaway postgres:16 container (needs Docker).
 #   bash supabase/tests/run-rls-tests.sh               # all migrations, expect pass
-#   bash supabase/tests/run-rls-tests.sh --before-fix  # skip 0003, expect FAILs
+#   bash supabase/tests/run-rls-tests.sh --before-fix  # skip 0003+0004 (audit fixes), expect FAILs
+#   bash supabase/tests/run-rls-tests.sh --setup-sql   # use supabase/setup.sql instead of migrations
 set -euo pipefail
 
 cd "$(dirname "$0")/../.."
@@ -18,7 +19,9 @@ done
 
 migrations=$(ls supabase/migrations/*.sql | sort)
 if [[ "${1:-}" == "--before-fix" ]]; then
-  migrations=$(echo "$migrations" | grep -v '0003_lockdown_rls')
+  migrations=$(echo "$migrations" | grep -v -E '0003_lockdown_rls|0004_payments_orders')
+elif [[ "${1:-}" == "--setup-sql" ]]; then
+  migrations=supabase/setup.sql
 fi
 echo "Applying: $(echo $migrations)"
 

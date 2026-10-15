@@ -103,6 +103,158 @@ exception when others then
   perform pg_temp.fail('service role cannot insert payment: ' || sqlerrm);
 end $$;
 
+-- ============================================================
+-- 0004: payment confirmation, order expiry, status rules (H-2, M-1, M-2)
+-- Every block catches all errors so a missing function counts as a FAIL.
+-- ============================================================
+
+-- H-2: confirm_vnpay_payment (service role). Payment TXN-OK-1 = 200000 for test.order_id.
+do $$
+declare r text; st text;
+begin
+  r := public.confirm_vnpay_payment('NO-SUCH-TXN', 200000, true, 'T0', '{}'::jsonb);
+  if r = 'not_found' then raise notice 'PASS confirm: unknown txn -> not_found';
+  else perform pg_temp.fail('confirm unknown txn returned ' || r); end if;
+
+  r := public.confirm_vnpay_payment('TXN-OK-1', 1000, true, 'T1', '{}'::jsonb);
+  select status into st from public.orders where id = current_setting('test.order_id')::uuid;
+  if r = 'invalid_amount' and st = 'pending' then raise notice 'PASS confirm: wrong amount -> invalid_amount, order stays pending';
+  else perform pg_temp.fail(format('confirm wrong amount returned %s, order %s', r, st)); end if;
+
+  r := public.confirm_vnpay_payment('TXN-OK-1', 200000, true, 'T2', '{"vnp_ResponseCode":"00"}'::jsonb);
+  select status into st from public.orders where id = current_setting('test.order_id')::uuid;
+  if r = 'paid' and st = 'paid' then raise notice 'PASS confirm: valid payment -> order paid';
+  else perform pg_temp.fail(format('confirm valid returned %s, order %s', r, st)); end if;
+
+  r := public.confirm_vnpay_payment('TXN-OK-1', 200000, true, 'T2', '{}'::jsonb);
+  if r = 'already_confirmed' then raise notice 'PASS confirm: second call (IPN + return) -> already_confirmed';
+  else perform pg_temp.fail('confirm second call returned ' || r); end if;
+exception when others then
+  perform pg_temp.fail('confirm_vnpay_payment: ' || sqlerrm);
+end $$;
+
+-- Customer places a second order (stock 8 -> 6) and a third (6 -> 5).
+reset role;
+set role authenticated;
+select set_config('request.jwt.claims', '{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}', false);
+do $$
+begin
+  insert into public.cart_items (cart_id, product_id, quantity)
+  select id, '22222222-2222-2222-2222-222222222222', 2 from public.carts where user_id = auth.uid();
+  perform set_config('test.order2', public.place_order('Alice', '0901234567', '1 Le Loi, Q1', null)::text, false);
+  insert into public.cart_items (cart_id, product_id, quantity)
+  select id, '22222222-2222-2222-2222-222222222222', 1 from public.carts where user_id = auth.uid();
+  perform set_config('test.order3', public.place_order('Alice', '0901234567', '1 Le Loi, Q1', null)::text, false);
+exception when others then
+  perform pg_temp.fail('setup extra orders: ' || sqlerrm);
+end $$;
+
+-- Customers cannot call the server-only functions.
+do $$
+begin
+  perform public.confirm_vnpay_payment('TXN-OK-1', 200000, true, 'X', '{}'::jsonb);
+  perform pg_temp.fail('customer called confirm_vnpay_payment');
+exception when insufficient_privilege then
+  raise notice 'PASS customer cannot call confirm_vnpay_payment';
+when others then perform pg_temp.fail('confirm as customer: ' || sqlerrm);
+end $$;
+do $$
+begin
+  perform public.expire_pending_orders();
+  perform pg_temp.fail('customer called expire_pending_orders');
+exception when insufficient_privilege then
+  raise notice 'PASS customer cannot call expire_pending_orders';
+when others then perform pg_temp.fail('expire as customer: ' || sqlerrm);
+end $$;
+
+-- M-2: customer cannot change order status, directly or via RPC.
+do $$
+begin
+  perform public.set_order_status(current_setting('test.order3')::uuid, 'cancelled');
+  perform pg_temp.fail('customer changed order status via set_order_status');
+exception when insufficient_privilege then
+  raise notice 'PASS customer cannot call set_order_status';
+when others then perform pg_temp.fail('set_order_status as customer: ' || sqlerrm);
+end $$;
+
+-- M-1: cart line quantity is capped at 99.
+do $$
+begin
+  insert into public.cart_items (cart_id, product_id, quantity)
+  select id, '22222222-2222-2222-2222-222222222222', 100 from public.carts where user_id = auth.uid();
+  perform pg_temp.fail('cart line accepted quantity 100');
+exception when check_violation then
+  raise notice 'PASS cart line quantity capped at 99';
+when others then perform pg_temp.fail('cart cap: ' || sqlerrm);
+end $$;
+
+-- M-1: expire_pending_orders cancels stale orders and restocks.
+reset role;
+update public.orders set created_at = now() - interval '1 hour'
+where id = nullif(current_setting('test.order2', true), '')::uuid;
+insert into public.payments (order_id, amount, status, txn_ref)
+select id, total_amount, 'pending', 'TXN-STALE-1' from public.orders
+where id = nullif(current_setting('test.order2', true), '')::uuid;
+set role service_role;
+do $$
+declare n int; st text; ps text; s int;
+begin
+  n := public.expire_pending_orders();
+  select status into st from public.orders where id = current_setting('test.order2')::uuid;
+  select status into ps from public.payments where txn_ref = 'TXN-STALE-1';
+  select stock into s from public.products where id = '22222222-2222-2222-2222-222222222222';
+  if n = 1 and st = 'cancelled' and ps = 'failed' and s = 7 then
+    raise notice 'PASS expire: stale order cancelled, payment failed, stock restored (5 -> 7)';
+  else
+    perform pg_temp.fail(format('expire: n=%s order=%s payment=%s stock=%s', n, st, ps, s));
+  end if;
+exception when others then
+  perform pg_temp.fail('expire_pending_orders: ' || sqlerrm);
+end $$;
+
+-- M-1/M-2: staff status rules.
+reset role;
+insert into auth.users (id, raw_user_meta_data)
+values ('33333333-3333-3333-3333-333333333333', '{"full_name":"Bob"}');
+update public.profiles set role = 'staff' where id = '33333333-3333-3333-3333-333333333333';
+set role authenticated;
+select set_config('request.jwt.claims', '{"sub":"33333333-3333-3333-3333-333333333333","role":"authenticated"}', false);
+
+do $$
+begin
+  update public.orders set status = 'shipped' where id = current_setting('test.order3')::uuid;
+  perform pg_temp.fail('staff updated orders directly');
+exception when insufficient_privilege then
+  raise notice 'PASS staff cannot update orders directly';
+when others then perform pg_temp.fail('staff direct update: ' || sqlerrm);
+end $$;
+
+do $$
+begin
+  perform public.set_order_status(current_setting('test.order3')::uuid, 'paid');
+  perform pg_temp.fail('staff moved pending -> paid');
+exception when others then
+  if sqlerrm like 'INVALID_TRANSITION%' then raise notice 'PASS staff cannot mark pending order as paid';
+  else perform pg_temp.fail('pending->paid: ' || sqlerrm); end if;
+end $$;
+
+do $$
+declare st text; s int;
+begin
+  perform public.set_order_status(current_setting('test.order_id')::uuid, 'shipped');
+  select status into st from public.orders where id = current_setting('test.order_id')::uuid;
+  if st = 'shipped' then raise notice 'PASS staff paid -> shipped';
+  else perform pg_temp.fail('paid->shipped left status ' || st); end if;
+
+  perform public.set_order_status(current_setting('test.order3')::uuid, 'cancelled');
+  select status into st from public.orders where id = current_setting('test.order3')::uuid;
+  select stock into s from public.products where id = '22222222-2222-2222-2222-222222222222';
+  if st = 'cancelled' and s = 8 then raise notice 'PASS staff pending -> cancelled restocks (7 -> 8)';
+  else perform pg_temp.fail(format('pending->cancelled: status=%s stock=%s', st, s)); end if;
+exception when others then
+  perform pg_temp.fail('staff transitions: ' || sqlerrm);
+end $$;
+
 reset role;
 do $$
 begin

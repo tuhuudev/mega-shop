@@ -9,14 +9,29 @@ import { slugify } from '@/lib/utils';
 
 /**
  * Server Actions cho ADMIN: CRUD san pham/danh muc + doi trang thai don.
- * Quyen ghi do RLS DB kiem soat (chi staff/admin: is_staff()). Day chi validate
- * dau vao + chuan hoa slug, sau do revalidate cac trang lien quan.
+ * 2 lop quyen: requireStaff() o app + RLS DB (is_staff()). Doi trang thai don
+ * chi qua RPC set_order_status (ma tran chuyen trang thai, hoan kho khi huy).
  * Tra ve { error } khi that bai de UI hien thi.
  */
 
 export type ActionResult = { error: string } | { ok: true };
 
 // ---- Helpers ----
+
+/** Chi staff/admin. Tra ve { error } neu khong du quyen, null neu hop le. */
+async function requireStaff(): Promise<{ error: string } | null> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: 'Chua dang nhap' };
+
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle();
+  if (!profile || (profile.role !== 'staff' && profile.role !== 'admin')) {
+    return { error: 'Khong co quyen thuc hien thao tac nay' };
+  }
+  return null;
+}
 
 // Ep gia tri form (string) ve so/null cho zod product input.
 function toNumber(value: FormDataEntryValue | null): number {
@@ -42,6 +57,9 @@ function parseProductForm(formData: FormData) {
 // ---- Products ----
 
 export async function createProduct(formData: FormData): Promise<ActionResult> {
+  const denied = await requireStaff();
+  if (denied) return denied;
+
   const parsed = parseProductForm(formData);
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? 'Du lieu khong hop le' };
@@ -62,6 +80,9 @@ export async function createProduct(formData: FormData): Promise<ActionResult> {
 }
 
 export async function updateProduct(id: string, formData: FormData): Promise<ActionResult> {
+  const denied = await requireStaff();
+  if (denied) return denied;
+
   if (!z.string().uuid().safeParse(id).success) {
     return { error: 'ID khong hop le' };
   }
@@ -86,6 +107,9 @@ export async function updateProduct(id: string, formData: FormData): Promise<Act
 }
 
 export async function deleteProduct(id: string): Promise<ActionResult> {
+  const denied = await requireStaff();
+  if (denied) return denied;
+
   if (!z.string().uuid().safeParse(id).success) {
     return { error: 'ID khong hop le' };
   }
@@ -108,6 +132,9 @@ const categoryInputSchema = categorySchema.pick({ name: true }).extend({
 });
 
 export async function createCategory(formData: FormData): Promise<ActionResult> {
+  const denied = await requireStaff();
+  if (denied) return denied;
+
   const parsed = categoryInputSchema.safeParse({
     name: typeof formData.get('name') === 'string' ? (formData.get('name') as string).trim() : '',
     slug: toNullableText(formData.get('slug')) ?? undefined,
@@ -129,6 +156,9 @@ export async function createCategory(formData: FormData): Promise<ActionResult> 
 }
 
 export async function deleteCategory(id: string): Promise<ActionResult> {
+  const denied = await requireStaff();
+  if (denied) return denied;
+
   if (!z.string().uuid().safeParse(id).success) {
     return { error: 'ID khong hop le' };
   }
@@ -151,6 +181,9 @@ const updateOrderStatusSchema = z.object({
 });
 
 export async function updateOrderStatus(formData: FormData): Promise<ActionResult> {
+  const denied = await requireStaff();
+  if (denied) return denied;
+
   const parsed = updateOrderStatusSchema.safeParse({
     id: formData.get('id'),
     status: formData.get('status'),
@@ -160,12 +193,20 @@ export async function updateOrderStatus(formData: FormData): Promise<ActionResul
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.from('orders').update({ status: parsed.data.status }).eq('id', parsed.data.id);
+  const { error } = await supabase.rpc('set_order_status', {
+    p_order_id: parsed.data.id,
+    p_status: parsed.data.status,
+  });
   if (error) {
+    if (error.message.includes('INVALID_TRANSITION')) {
+      return { error: 'Khong the chuyen don sang trang thai nay' };
+    }
+    if (error.message.includes('ORDER_NOT_FOUND')) return { error: 'Khong tim thay don hang' };
     return { error: error.message };
   }
 
   revalidatePath('/admin/orders');
   revalidatePath('/admin');
+  revalidateTag(CATALOG_TAG); // huy don -> hoan kho -> ton kho catalog doi
   return { ok: true };
 }

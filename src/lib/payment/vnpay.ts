@@ -16,6 +16,12 @@ const TMN_CODE = process.env.VNPAY_TMN_CODE!;
 const HASH_SECRET = process.env.VNPAY_HASH_SECRET!;
 
 /**
+ * Link thanh toan het han sau 15 phut (vnp_ExpireDate) - ngan hon han huy don
+ * pending (30 phut, expire_pending_orders) -> khach khong tra tien cho don da huy.
+ */
+const PAYMENT_TTL_MS = 15 * 60 * 1000;
+
+/**
  * Sap xep params theo key (alphabet) + encode chuan VNPay.
  * VNPay encode khoang trang thanh '+' (giong querystring.stringify cua Node),
  * nen ta dung encodeURIComponent roi thay '%20' -> '+' cho dong nhat.
@@ -73,6 +79,7 @@ export interface BuildPaymentUrlParams {
 export function buildPaymentUrl(params: BuildPaymentUrlParams): { url: string; txnRef: string } {
   const { orderId, amount, ipAddr, orderInfo } = params;
   const now = new Date();
+  const expireAt = new Date(now.getTime() + PAYMENT_TTL_MS);
   const txnRef = params.txnRef ?? `${formatVnDate(now)}${Math.floor(Math.random() * 1e6)
     .toString()
     .padStart(6, '0')}`;
@@ -90,6 +97,7 @@ export function buildPaymentUrl(params: BuildPaymentUrlParams): { url: string; t
     vnp_ReturnUrl: RETURN_URL,
     vnp_IpAddr: ipAddr,
     vnp_CreateDate: formatVnDate(now),
+    vnp_ExpireDate: formatVnDate(expireAt),
   };
 
   const signData = buildSignData(vnpParams);
@@ -102,9 +110,9 @@ export function buildPaymentUrl(params: BuildPaymentUrlParams): { url: string; t
 }
 
 export interface VerifyReturnResult {
-  /** Hash hop le (chu ky VNPay khop) -> du lieu dang tin. */
+  /** Hash hop le (chu ky VNPay khop) + dung TmnCode cua minh -> du lieu dang tin. */
   valid: boolean;
-  /** vnp_ResponseCode === '00' (giao dich thanh cong). */
+  /** vnp_ResponseCode === '00' VA vnp_TransactionStatus === '00' (giao dich thanh cong). */
   isSuccess: boolean;
   /** vnp_TxnRef - map nguoc ve payments. */
   txnRef: string;
@@ -142,15 +150,54 @@ export function verifyReturn(query: Record<string, string>): VerifyReturnResult 
     );
   }
 
+  // Chu ky dung nhung cua merchant khac -> khong tin.
+  if (query['vnp_TmnCode'] !== TMN_CODE) valid = false;
+
   const responseCode = query['vnp_ResponseCode'] ?? '';
+  const transactionStatus = query['vnp_TransactionStatus'] ?? '';
   const rawAmount = Number(query['vnp_Amount'] ?? '0');
 
   return {
     valid,
-    isSuccess: valid && responseCode === '00',
+    isSuccess: valid && responseCode === '00' && transactionStatus === '00',
     txnRef: query['vnp_TxnRef'] ?? '',
     amount: Number.isFinite(rawAmount) ? rawAmount / 100 : 0,
     transactionNo: query['vnp_TransactionNo'] ?? '',
     responseCode,
   };
+}
+
+/** Ket qua RPC confirm_vnpay_payment (migration 0004). */
+export type ConfirmOutcome =
+  | 'not_found'
+  | 'already_confirmed'
+  | 'invalid_amount'
+  | 'paid'
+  | 'failed'
+  | 'needs_refund';
+
+/**
+ * Map ket qua xu ly -> JSON tra cho VNPay IPN (spec: { RspCode, Message }).
+ * '00' = da ghi nhan (ke ca giao dich that bai / can hoan tien) -> VNPay ngung goi lai.
+ */
+export function ipnResponse(outcome: ConfirmOutcome | 'invalid_signature' | 'error'): {
+  RspCode: string;
+  Message: string;
+} {
+  switch (outcome) {
+    case 'paid':
+    case 'failed':
+    case 'needs_refund':
+      return { RspCode: '00', Message: 'Confirm Success' };
+    case 'already_confirmed':
+      return { RspCode: '02', Message: 'Order already confirmed' };
+    case 'not_found':
+      return { RspCode: '01', Message: 'Order not found' };
+    case 'invalid_amount':
+      return { RspCode: '04', Message: 'Invalid amount' };
+    case 'invalid_signature':
+      return { RspCode: '97', Message: 'Invalid signature' };
+    default:
+      return { RspCode: '99', Message: 'Unknown error' };
+  }
 }
