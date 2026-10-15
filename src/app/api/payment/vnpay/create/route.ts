@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createAdminClient, createClient } from '@/lib/supabase/server';
 import { buildPaymentUrl } from '@/lib/payment/vnpay';
 
 /**
@@ -57,7 +57,9 @@ export async function GET(request: NextRequest) {
   });
 
   // Luu giao dich pending de return handler doi soat theo txn_ref.
-  const { error: payErr } = await supabase.from('payments').insert({
+  // Service role: user khong con quyen INSERT payments (migration 0003);
+  // quyen so huu + status 'pending' da duoc kiem o tren bang client cua user.
+  const { error: payErr } = await createAdminClient().from('payments').insert({
     order_id: order.id,
     provider: 'vnpay',
     amount: order.total_amount,

@@ -6,7 +6,7 @@ E-commerce 1 cửa hàng — **Next.js 15 (App Router) + Supabase + VNPay**. Ti�
 ```bash
 pnpm install            # hoac npm install
 cp .env.example .env.local   # dien Supabase + VNPay keys
-# Tao Supabase project, chay supabase/migrations/0001_init.sql
+# Tao Supabase project, chay lan luot supabase/migrations/*.sql (hoac supabase/setup.sql)
 npm run dev             # http://localhost:3000
 ```
 
